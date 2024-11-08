@@ -1,5 +1,6 @@
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 
 def load_data(file_path):
@@ -22,11 +23,30 @@ def plot_algorithm_data(algorithm_data, algorithm):
     reverse_sorted_array_data = algorithm_data[algorithm_data['array_type'] == 'Обратный']
 
     plt.figure(figsize=(10, 6))
-    plt.plot(sorted_array_data['array_size'], sorted_array_data['execution_time'], label='Отсортированный')
-    plt.plot(nearly_sorted_array_data['array_size'], nearly_sorted_array_data['execution_time'],
-             label='Почти отсортированный')
-    plt.plot(random_array_data['array_size'], random_array_data['execution_time'], label='Случайный')
-    plt.plot(reverse_sorted_array_data['array_size'], reverse_sorted_array_data['execution_time'], label='Обратный')
+
+    # Регрессия для каждого типа данных
+    for data_subset, label in zip(
+            [sorted_array_data, nearly_sorted_array_data, random_array_data, reverse_sorted_array_data],
+            ['Отсортированный', 'Почти отсортированный', 'Случайный', 'Обратный']
+    ):
+        x = data_subset['array_size']
+        y = data_subset['execution_time']
+
+        # Полиномиальная регрессия (степень 2)
+        coefficients = np.polyfit(x, y, 2)
+        polynomial = np.poly1d(coefficients)
+
+        # Построение графика
+        plt.plot(x, y, label=label)
+
+        # Добавление линии регрессии
+        x_fit = np.linspace(x.min(), x.max(), 100)
+        y_fit = polynomial(x_fit)
+        plt.plot(x_fit, y_fit, linestyle='--', label=f'{label} - регрессия')
+
+        # Сохранение регрессионной функции
+        with open(f'{algorithm}_regression.txt', 'a') as f:
+            f.write(f'{label} регрессия: {polynomial}\n')
 
     plt.title(f'{algorithm} - график')
     plt.xlabel('N (Размер массива)')
@@ -44,4 +64,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
